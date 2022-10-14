@@ -1,0 +1,132 @@
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX vs:   <http://www.w3.org/2003/06/sw-vocab-status/ns#>
+PREFIX nen2660: <https://w3id.org/nen2660/def#>
+PREFIX dash: <http://datashapes.org/dash#>
+PREFIX sh:   <http://www.w3.org/ns/shacl#>
+PREFIX mim:  <http://bp4mc2.org/def/mim#>
+
+SELECT DISTINCT ?group_text ?group_iri ?entry_iri ?entry_text ?entry_icon
+WHERE {
+
+#########################
+# This query returns certain information on a given term.
+# Name, description, etc.
+#
+# INPUT:
+#   ?term_iri: The IRI of the term
+#########################
+    {
+        ?term_iri ?p ?o .
+        FILTER (?p != nen2660:hasPart) .
+        FILTER (?p != skos:broader) .
+        FILTER (?p != skos:inScheme) .
+        FILTER (?p != sh:property) .
+        FILTER (?o != owl:Class) .
+    } 
+        
+    BIND (IF (?p IN (rdfs:label, skos:prefLabel), "Naam",
+          IF (?p IN (rdf:type), "Type", 
+          IF (?p IN (skos:altLabel), "Synoniem", 
+          IF (?p IN (skos:notation), "Code",
+          IF (?p IN (skos:example), "Voorbeeld",
+          IF (?p IN (rdfs:comment), "Commentaar",
+          IF (?p IN (skos:definition), "Definitie",  
+          IF (?p IN (nen2660:abbreviation), "Afkorting", 
+          IF (?p IN (rdfs:domain), "Always applied from", 
+          IF (?p IN (rdfs:range), "Always leads to", 
+          IF (?p IN (vs:term_status), "Status",
+          IF (?p IN (owl:oneOf), "Possible values",
+          IF (?p IN (rdf:value), "Text",
+          IF (?p IN (skos:scopeNote), "Scope note",
+          IF (?p IN (nen2660:describes), "Describes",
+          IF (?p IN (rdfs:subClassOf), "Subklasse van",
+          IF (?p IN (nen2660:transforms), "Transforms",
+          IF (?p IN (rdfs:subPropertyOf), "Subproperty of",
+          IF (?p IN (rdfs:member), "Groep voor",
+          IF (?p IN (skos:note), "Toelichting", 
+          IF (?p IN (nen2660:hasQuantityKind), "Grootheid",
+          IF (?p IN (nen2660:hasUnit), "Eenheid",
+          IF (?p IN (dash:abstract), "Abstracte klasse",
+          IF (?p IN (rdfs:seeAlso), "Wordt gedefinieerd door term", ?empty))))))))))))))))))))))))
+          AS ?textPropertyRecognized) .
+
+    OPTIONAL {
+        ?p skos:prefLabel ?textPropertyFound .
+    }
+
+    BIND (COALESCE(?textPropertyRecognized, ?textPropertyFound, ?p) AS ?group_text) .
+    BIND (?p AS ?group_iri) .
+
+    {
+        ?term_iri ?p ?o .
+        FILTER (isLiteral(?o)) .
+        BIND (?o AS ?entry_a) .
+        BIND (IF(LANG(?o)!="",CONCAT("flag-icon flag-icon-", LANG(?o)),"") AS ?entry_icon) .
+    
+    } 
+    UNION
+    {
+        ?term_iri ?p ?o .
+        FILTER (isIRI(?o) && !isBlank(?o) && ?p != owl:oneOf) .
+        OPTIONAL {
+            ?o skos:prefLabel ?oLabel .
+             FILTER(LANG(?oLabel)="nl"||LANG(?oLabel)="") .
+            BIND(STR(?oLabel) AS ?textObjectFound ) .
+        }
+        BIND (IF(contains(str(?o),"#"),strafter(str(?o), "#"),REPLACE(str(?o),"(.*)[//]","")) AS ?textObjectLocalname) .
+        BIND (COALESCE(?textObjectFound, ?textObjectLocalname) AS ?entry_a) .
+        BIND (?o AS ?entry_iri_a) .
+    }
+    UNION
+    {
+        ?term_iri owl:oneOf ?o .
+        ?value a ?term_iri .    
+        ?value skos:prefLabel ?valueName .
+        BIND (?value AS ?entry_iri_a) .
+        BIND (?valueName AS ?entry_a) .
+    }
+ 
+ # Deze 4 BIND's zorgen ervoor dat wanneer de IRI een term betreft, deze als tekst gepresenteerd wordt en dus gekopieerd kan worden naar klembord     
+    VALUES ?plattetekst
+    {
+       "/term/"
+       "/qudt"
+       "nen2660"
+       "nen3610"
+    }
+
+    BIND (IF(CONTAINS(STR(?entry_iri_a),?plattetekst) = true, STR(?entry_iri_a), ?entry_a) AS ?entry_b) .
+    BIND (IF(CONTAINS(STR(?entry_iri_a),?plattetekst) = true, "", ?entry_iri_a) AS ?entry_t) . 
+    BIND(COALESCE(?entry_b, ?entry_a) AS ?entry_text) .
+    BIND(COALESCE(?entry_t, ?entry_iri_a) AS ?entry_iri) .
+ 
+    BIND (IF (?group_text = "Type", 10, 
+          IF (?group_text = "Naam", 20, 
+          IF (?group_text = "Code", 30,
+          IF (?group_text = "Text", 40,
+          IF (?group_text = "Definitie", 60,
+          IF (?group_text = "Toelichting", 61,
+          IF (?group_text = "Voorbeeld", 70,
+          IF (?group_text = "Afkorting", 80,
+          IF (?group_text = "Synononiem", 90, 
+          IF (?group_text = "Wordt gedefinieerd door term", 91, 
+          IF (?group_text = "Subklasse van", 100,
+          IF (?group_text = "Subproperty of", 110,
+          IF (?group_text = "Possible values", 120,
+          IF (?group_text = "Describes", 130,
+          IF (?group_text = "Abstracte klasse", 131,
+          IF (?group_text = "Transforms", 140,
+          IF (?group_text = "Scope note", 150,
+          IF (?group_text = "Referred standard", 160,
+          IF (?group_text = "Owner", 170,
+          IF (?group_text = "Always applied from", 190,
+          IF (?group_text = "Always leads to", 200,
+          IF (?group_text = "Status", 210, 220))))))))))))))))))))))
+          AS ?sequence) .
+
+}
+
+ORDER BY ?sequence STR(?group_text) STR(?entry_text) STR(?entry_iri) ?entry_icon

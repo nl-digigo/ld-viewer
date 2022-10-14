@@ -1,0 +1,36 @@
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX nen2660: <https://w3id.org/nen2660/def#>
+PREFIX imbor: <https://data.crow.nl/imbor/def/>
+
+SELECT ?entry_text ?entry_iri ?entry_icon (COUNT(DISTINCT ?rootchild) AS ?entry_childCount)
+
+WHERE {
+
+#########################
+# This query returns the root nodes for the tree containing
+#########################
+
+    VALUES ( ?root ) {
+         ( rdf:Property )
+         ( nen2660:TopConcept )
+         }    
+
+    OPTIONAL {?root skos:prefLabel ?prefLabel }.
+    OPTIONAL {?rootchild rdfs:subClassOf ?root }.     
+    OPTIONAL {?root rdfs:member ?rootchild }.
+    OPTIONAL {?rootchild rdf:type ?root }.
+ 
+    BIND (COALESCE(?prefLabel) AS ?label)
+    BIND(CONCAT(STR(?label), ?entry_suffix) AS ?entry_text) .
+#   FILTER(LANG(?prefLabel) = "nl" || "") .
+
+    BIND(?root AS ?entry_iri) .
+    BIND(IF(?root = rdf:Property, "icon-term-type-r", "icon-term-type-b") AS ?entry_icon) .
+}
+
+
+GROUP BY ?entry_text ?entry_iri ?entry_icon
+ORDER BY ?entry_text ?entry_iri ?entry_childCount

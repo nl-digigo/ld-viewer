@@ -1,0 +1,67 @@
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+PREFIX sh:   <http://www.w3.org/ns/shacl#>
+PREFIX nen2660: <https://w3id.org/nen2660/def#>
+
+SELECT ?group_iri ?group_text ?entry_text ?entry_iri ?entry_badge 
+WHERE {
+
+#########################
+# This query returns everything regarding the rdf:Property/sh:Property for a given term. 
+# These are the so called 'attributes'
+#
+# INPUT:
+#   ?term_iri: The IRI of the term
+#########################
+
+{
+# Subquery for inferencing
+
+    SELECT DISTINCT ?group_iri ?group_text {
+        # BIND (<https://data.crow.nl/imbor/def/83a942f7-5291-42f0-afb1-9a57d0fb2f15> AS ?term_iri)
+        {
+            ?term_iri rdfs:subClassOf+ ?super .
+            ?super skos:prefLabel ?label .
+            FILTER(LANG(?label)="nl"||LANG(?label)="") .
+
+            BIND (concat(?label, " (overgeërfd)") AS ?group_text)
+            BIND (?super AS ?group_iri)
+        }
+        UNION {
+            BIND ( ?term_iri AS ?group_iri )
+            ?term_iri skos:prefLabel ?group_text .
+        }
+  	}
+}
+  ?group_iri sh:property ?shape .
+    OPTIONAL {?shape skos:prefLabel ?shapeLabel} .
+    ?shape sh:path ?attribuut .
+    OPTIONAL {?shape sh:minCount ?shapeMinCount} .
+    OPTIONAL {?shape sh:qualifiedMinCount ?qshapeMinCount} .
+    OPTIONAL {?shape sh:maxCount ?shapeMaxCount} .
+    OPTIONAL {?shape sh:qualifiedMaxCount ?qshapeMaxCount} .
+    OPTIONAL {?shape nen2660:hasUnit ?unit} .
+    OPTIONAL {?shape sh:datatype ?datatype} .
+    FILTER(!CONTAINS(STR(?attribuut),"nen2660"))
+    BIND (COALESCE(?shapeMinCount, ?qshapeMinCount) AS ?minC)
+    BIND (COALESCE(?shapeMaxCount, ?qshapeMaxCount) AS ?maxC)   
+
+    BIND (CONCAT(IF(BOUND(?minC),STR(?minC),"0"),":",IF(BOUND(?maxC),STR(?maxC),"n")) AS ?multipl) .
+    BIND (REPLACE(STR(?datatype), STR(xsd:), 'xsd:') AS ?hrDatatype )
+  
+    BIND(IF(BOUND(?datatype), CONCAT(?multipl, ' (waarde: ', ?hrDatatype, ')'), ?multipl) AS ?entry_badge)
+    
+    OPTIONAL{?attribuut skos:prefLabel ?attribuutLabel}.
+    OPTIONAL{?attribuut skos:definition ?attribuutDef}.
+    OPTIONAL{?attribuut skos:note ?typeAttribuut}.
+    OPTIONAL{?attribuut nen2660:hasQuantityKind ?attribuutQK}.
+
+    BIND (IF(BOUND(?unit), CONCAT(?attribuutLabel, ' (in ', REPLACE(STR(?unit), "http://qudt.org/vocab/unit/", ""), ")"), ?attribuutLabel) AS ?entry_text) .
+    BIND (?attribuut AS ?entry_iri) .
+
+    BIND (IF(?group_iri = ?term_iri, 1, 2) AS ?sequence)
+}
+ORDER BY ?sequence STR(?group_text) STR(?group_iri) STR(?entry_text)  ?entry_iri 

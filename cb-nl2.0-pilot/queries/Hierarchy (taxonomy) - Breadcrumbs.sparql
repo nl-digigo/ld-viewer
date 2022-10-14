@@ -1,0 +1,70 @@
+PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:      <http://www.w3.org/2002/07/owl#>
+PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
+
+SELECT ?entry_text ?entry_iri ?entry_icon (COUNT(DISTINCT ?ancestor) AS ?entry_ancestorDistance)
+WHERE {
+
+#########################
+# This query returns the taxonomy breadcrumbs to a term.
+#
+# INPUT:
+#   ?term_iri: The IRI of the term
+#########################
+
+    ?term_iri rdfs:subClassOf* ?entry .
+    BIND (?entry AS ?entry_iri) .
+    
+    # FILTER excluding owl:Thing
+    FILTER (?entry != owl:Thing) .
+    
+    # FILTER excluding blank nodes
+    FILTER (isURI(?entry)) .
+
+    # FILTER excluding Restrictions AS nodes
+    FILTER NOT EXISTS {
+        ?entry rdf:type/rdfs:subClassOf* owl:Restriction .
+    }
+    
+    # get name
+    OPTIONAL {
+      ?entry skos:prefLabel ?entryPreferredLabel .
+      FILTER(LANG(?entryPreferredLabel) != "nl") .
+    }
+    OPTIONAL {
+      ?entry skos:prefLabel ?entryDutchLabel .
+      FILTER(LANG(?entryDutchLabel) = "nl") .
+    }
+    BIND (IF(contains(str(?entry),"#"),strafter(str(?entry), "#"),REPLACE(str(?entry),"(.*)[//]","")) AS ?entryLocalname) .
+    BIND (COALESCE(?entryPreferredLabel, ?entryDutchLabel, ?entryLocalname) AS ?entry_text) .
+
+   # get  type (for icon)
+    ?term_iri rdf:type ?iriType .
+    VALUES ?typeValues1 {sh:NodeShape}
+    VALUES ?typeValues2 {mim:Objecttype}
+    VALUES ?typeValues3 {mim:Attribuutsoort}
+    VALUES ?typeValues4 {mim:Enumeratie}
+    VALUES ?typeValues5 {skos:Concept}
+    FILTER (?iriType NOT IN(?typeValues1, ?typeValues2, ?typeValues3, ?typeValues4, ?typeValues5))
+    OPTIONAL {?term_iri dash:abstract ?abstract}
+
+  	BIND (IF(?abstract = False, "icon-term-type-db",
+           IF(?iriType = rdfs:Container, "icon-term-type-g",
+            IF(?iriType = rdfs:Class, "icon-term-type-b", 
+                    IF(?iriType = rdf:Property, "icon-term-type-r", "icon-term-type-p")))) AS ?entry_icon_abstractBounded)
+    BIND (IF(?iriType = rdfs:Container, "icon-term-type-g",
+            IF(?iriType = rdfs:Class, "icon-term-type-b", 
+                    IF(?iriType = rdf:Property, "icon-term-type-r", "icon-term-type-p"))) AS ?entry_icon_abstractUnbounded) 
+    BIND (IF(BOUND(?abstract), ?entry_icon_abstractBounded, ?entry_icon_abstractUnbounded) AS ?entry_icon)
+
+
+
+    # pattern to assess which ancestors exist
+    OPTIONAL {
+        ?term_iri rdfs:subClassOf/rdfs:subClassOf* ?ancestor .
+        ?ancestor rdfs:subClassOf* ?entry_iri .
+    }
+}
+GROUP BY ?entry_text ?entry_iri ?entry_icon
+ORDER BY DESC(?entry_ancestorDistance) ?entry_text ?entry_iri ?entry_icon

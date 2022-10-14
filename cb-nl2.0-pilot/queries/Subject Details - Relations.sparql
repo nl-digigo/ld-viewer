@@ -1,0 +1,54 @@
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX nen2660: <https://w3id.org/nen2660/def#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+
+SELECT DISTINCT ?group_text ?group_iri ?entry_text ?entry_iri ?entry_badge ?entry_icon
+WHERE {
+
+#########################
+# This query returns certain relations for a given concept.
+#
+# INPUT:
+#   ?term_iri: The IRI of the concept
+#########################
+
+## TODO > Overerving van relaties (zit overigens nauwelijks/niet in IMBOR)
+
+    ?term_iri sh:property ?shape .
+    ?shape rdf:type ?type .
+    OPTIONAL {?shape skos:prefLabel ?shapeLabel} .
+    OPTIONAL {?shape sh:path ?relation} .
+    OPTIONAL {?shape sh:qualifiedMinCount ?minC} .
+    OPTIONAL {?shape sh:qualifiedMaxCount ?maxC} .
+    OPTIONAL {?shape sh:qualifiedValueShape/sh:class ?range} .
+    FILTER(CONTAINS(STR(?relation),"nen2660"))
+    
+    BIND (CONCAT(IF(BOUND(?minC),STR(?minC),"0"),":",IF(BOUND(?maxC),STR(?maxC),"n")) AS ?entry_badge) .
+
+    BIND (?relation AS ?group) 
+    BIND (?relation AS ?group_iri) 
+    BIND (?range AS ?entry) 
+    BIND (?range AS ?entry_iri) 
+
+    BIND (IF(CONTAINS(STR(?entry),"#"),STRAFTER(STR(?entry), "#"),REPLACE(STR(?entry),"(.*)[//]","")) AS ?entryLocalname) .
+
+    # get name
+    OPTIONAL {    ?entry skos:prefLabel ?entryLabel .
+#                FILTER (LANG(?entryLabel) != "nl") .
+             }
+    BIND (COALESCE(?noEntryName, ?entryLabel, ?entryLocalname) AS ?entry_text) .
+    
+    # get group name
+    OPTIONAL {    ?group skos:prefLabel ?groupLabel .
+#                FILTER (LANG(?groupLabel) != "nl") .
+             }
+    BIND (IF(CONTAINS(STR(?group),"#"),STRAFTER(STR(?group), "#"),REPLACE(STR(?group),"(.*)[//]","")) AS ?groupLocalname) .
+    BIND (COALESCE(?groupLabel, ?groupLocalname) AS ?group_text) .
+
+    BIND ("icon-term-type" AS ?entry_icon) .
+   
+}
+ORDER BY ?group_text ?group_iri ?entry_text ?entry_iri
