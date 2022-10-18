@@ -19,28 +19,16 @@ WHERE {
 #   ?term_iri: The IRI of the parent term
 #########################
 
-    {
-        ?child rdfs:subClassOf ?term_iri .
-        OPTIONAL {
-            ?grandchild rdfs:subClassOf|rdf:type ?child .
-        }
-    } UNION {
-        ?child rdf:type ?term_iri .
-    } UNION {
+    {   ?child rdfs:subClassOf|rdf:type|rdfs:subPropertyOf ?term_iri .
+            OPTIONAL {?grandchild rdfs:subClassOf|rdf:type|rdfs:subPropertyOf ?child . }
+    } 
+    UNION {
         ?term_iri rdfs:member ?child  .
-       
-        OPTIONAL {
-            ?child rdfs:member ?grandchild .
-        }
-    } UNION {
-        ?child rdfs:subPropertyOf ?term_iri .
-        OPTIONAL {
-            ?grandchild rdfs:subPropertyOf ?child .
-        }
-    }
+            OPTIONAL {?child rdfs:member ?grandchild . }
+    } 
+        
+     FILTER (?child != ?term_iri) .
 
-    
-    FILTER (?child != ?term_iri) .
     
     # FILTER excluding owl:Thing
     FILTER (?child != owl:Thing) .
@@ -53,7 +41,7 @@ WHERE {
         ?child rdf:type/rdfs:subClassOf* owl:Restriction .
     }
     
-# get child type (for icon)
+# Get child type (for icon)
 
     ?child rdf:type ?typeChild .
     bind ( strstarts(str(?child), str(cbnl:))||strstarts(str(?child), str(cbnl-term:)) AS ?isFromCBNL)
@@ -66,14 +54,20 @@ WHERE {
                 IF(?typeChild = owl:Class, "icon-term-type-b",
                     IF(?typeChild = rdf:Property, "icon-term-type-r", "icon-term-type-p"))))) AS ?entry_icon)
 
-#get child name (door OPTIONAL weg te halen worden de NEN2660 concepten er uit gefilterd (welke alleen English prefLabel hebben)
+# Get child name 
     OPTIONAL {
-        ?child rdfs:label | skos:prefLabel ?childLabel .
-        FILTER (LANG(?childLabel)="nl"||LANG(?childLabel)="en"||LANG(?childLabel)="") .
+        # Subquery om één resultaat in tree te krijgen (eerst NL, anders EN, anders localname)
+        SELECT ?child ?childLabel 
+        WHERE {
+            OPTIONAL {?child rdfs:label | skos:prefLabel ?childLabelNL . FILTER (LANG(?childLabelNL)="nl") }
+            OPTIONAL {?child rdfs:label | skos:prefLabel ?childLabelEN . FILTER(LANG(?childLabelEN)="en") }
+            OPTIONAL {?child rdfs:label | skos:prefLabel ?childLabelXX . FILTER(LANG(?childLabelXX)="") }
+            BIND(COALESCE(?childLabelNL, ?childLabelEN, ?childLabelXX) AS ?childLabel)
+        }
     }
 
     BIND (IF(CONTAINS(STR(?child),"#"),STRAFTER(STR(?child), "#"),REPLACE(STR(?child),"(.*)[//]","")) AS ?childLocalname) .
-    BIND (COALESCE(STR(?childLabel), ?childLocalname) AS ?entry_text) .
+    BIND (COALESCE(?childLabel, ?childLocalname) AS ?entry_text) .
 }
 
 
