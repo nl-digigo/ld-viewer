@@ -3,6 +3,8 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX owl:  <http://www.w3.org/2002/07/owl#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX nen2660: <https://w3id.org/nen2660/def#>
+PREFIX cbnl: <https://bimloket.nl/data/def/cbnl/> 
+PREFIX cbnl-term: <https://bimloket.nl/data/term/cbnl/> 
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 
 SELECT DISTINCT ?group_text ?group_iri ?entry_text ?entry_iri ?entry_badge ?entry_icon
@@ -15,7 +17,7 @@ WHERE {
 #   ?term_iri: The IRI of the concept
 #########################
 
-## TODO > Overerving van relaties (zit overigens nauwelijks/niet in IMBOR)
+## TODO > Overerving van relaties (zit overigens nauwelijks/niet in CB-NL)
 
     ?term_iri sh:property ?shape .
     ?shape rdf:type ?type .

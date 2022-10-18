@@ -2,11 +2,11 @@ PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX owl:      <http://www.w3.org/2002/07/owl#>
 PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
-PREFIX imbor:   <https://data.crow.nl/imbor/def/>
-PREFIX mim:     <http://bp4mc2.org/def/mim#>
 PREFIX sh:      <http://www.w3.org/ns/shacl#>
 PREFIX dash:     <http://datashapes.org/dash#>
 PREFIX nen2660: <https://w3id.org/nen2660/def#>
+PREFIX cbnl: <https://bimloket.nl/data/def/cbnl/> 
+PREFIX cbnl-term: <https://bimloket.nl/data/term/cbnl/> 
 
 SELECT ?entry_text ?entry_iri ?entry_icon (COUNT(?grandchild) AS ?entry_childCount)
 
@@ -32,7 +32,13 @@ WHERE {
         OPTIONAL {
             ?child rdfs:member ?grandchild .
         }
+    } UNION {
+        ?child rdfs:subPropertyOf ?term_iri .
+        OPTIONAL {
+            ?grandchild rdfs:subPropertyOf ?child .
+        }
     }
+
     
     FILTER (?child != ?term_iri) .
     
@@ -50,17 +56,20 @@ WHERE {
 # get child type (for icon)
 
     ?child rdf:type ?typeChild .
+    bind ( strstarts(str(?child), str(cbnl:))||strstarts(str(?child), str(cbnl-term:)) AS ?isFromCBNL)
 
     BIND (?child AS ?entry_iri) .
-  	BIND (IF(?typeChild = rdfs:Container, "icon-term-type-g",
+
+  	BIND (IF(?isFromCBNL, "icon-term-type-w",
+        IF(?typeChild = rdfs:Container, "icon-term-type-g",
             IF(?typeChild = rdfs:Class, "icon-term-type-b", 
                 IF(?typeChild = owl:Class, "icon-term-type-b",
-                    IF(?typeChild = rdf:Property, "icon-term-type-r", "icon-term-type-p")))) AS ?entry_icon)
+                    IF(?typeChild = rdf:Property, "icon-term-type-r", "icon-term-type-p"))))) AS ?entry_icon)
 
 #get child name (door OPTIONAL weg te halen worden de NEN2660 concepten er uit gefilterd (welke alleen English prefLabel hebben)
     OPTIONAL {
-        ?child skos:prefLabel ?childLabel .
-        FILTER (LANG(?childLabel)="nl"||LANG(?childLabel)="") .
+        ?child rdfs:label | skos:prefLabel ?childLabel .
+        FILTER (LANG(?childLabel)="nl"||LANG(?childLabel)="en"||LANG(?childLabel)="") .
     }
 
     BIND (IF(CONTAINS(STR(?child),"#"),STRAFTER(STR(?child), "#"),REPLACE(STR(?child),"(.*)[//]","")) AS ?childLocalname) .

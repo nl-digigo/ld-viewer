@@ -5,6 +5,8 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
 PREFIX sh:   <http://www.w3.org/ns/shacl#>
 PREFIX nen2660: <https://w3id.org/nen2660/def#>
+PREFIX cbnl: <https://bimloket.nl/data/def/cbnl/> 
+PREFIX cbnl-term: <https://bimloket.nl/data/term/cbnl/> 
 
 SELECT ?group_iri ?group_text ?entry_text ?entry_iri ?entry_badge 
 WHERE {
@@ -21,7 +23,6 @@ WHERE {
 # Subquery for inferencing
 
     SELECT DISTINCT ?group_iri ?group_text {
-        # BIND (<https://data.crow.nl/imbor/def/83a942f7-5291-42f0-afb1-9a57d0fb2f15> AS ?term_iri)
         {
             ?term_iri rdfs:subClassOf+ ?super .
             ?super skos:prefLabel ?label .

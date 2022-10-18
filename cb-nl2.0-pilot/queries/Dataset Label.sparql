@@ -22,7 +22,7 @@ WHERE {
     }
     
     BIND (?ontology AS ?iri) .
-    BIND (COALESCE("CB-NL2.0 Pilot | <<CONCEPT - Work in Progress>>") AS ?text) .
+    BIND (COALESCE("CB-NL2.0 Pilot set:'Sterke taxonomie' | <<CONCEPT - Work in Progress>>") AS ?text) .
 }
 ORDER BY ?ontology
 LIMIT 1

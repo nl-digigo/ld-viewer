@@ -3,7 +3,9 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX owl:  <http://www.w3.org/2002/07/owl#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX nen2660: <https://w3id.org/nen2660/def#>
-PREFIX imbor: <https://data.crow.nl/imbor/def/>
+PREFIX cbnl: <https://bimloket.nl/data/def/cbnl/> 
+PREFIX cbnl-term: <https://bimloket.nl/data/term/cbnl/> 
+
 
 SELECT ?entry_text ?entry_iri ?entry_icon (COUNT(DISTINCT ?rootchild) AS ?entry_childCount)
 
@@ -16,14 +18,20 @@ WHERE {
     VALUES ( ?root ) {
          ( rdf:Property )
          ( nen2660:TopConcept )
+         ( nen2660:AggregationStateType )
+         ( nen2660:TransferType )
+         ( nen2660:RequirementSeverityType )
+         ( nen2660:RequirementSourceType )
+         ( nen2660:RequirementTopicType )
          }    
 
     OPTIONAL {?root skos:prefLabel ?prefLabel }.
+    OPTIONAL {?root rdfs:label ?rdfslabel }.
     OPTIONAL {?rootchild rdfs:subClassOf ?root }.     
     OPTIONAL {?root rdfs:member ?rootchild }.
     OPTIONAL {?rootchild rdf:type ?root }.
  
-    BIND (COALESCE(?prefLabel) AS ?label)
+    BIND (COALESCE(?prefLabel, ?rdfslabel) AS ?label)
     BIND(CONCAT(STR(?label), ?entry_suffix) AS ?entry_text) .
 #   FILTER(LANG(?prefLabel) = "nl" || "") .
 
