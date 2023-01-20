@@ -4,9 +4,9 @@
   "dataServiceOptions": {
     "url": "https://hub.laces.tech/crow/bimloket/contractspecificaties/ontology/cs-ontology-beta/sparql",
     "mode": "post",
-    "auth": "basic",
-    "username": "e9c0f2d9-776b-456e-9508-10c620f0f598",
-    "password": "44b54399-57ad-47cd-be23-33f11dc0ab63"
+    "auth": null,
+    "username": "",
+    "password": ""
   },
 
   "queryTerm": "url:queries/Subject Name.sparql",
