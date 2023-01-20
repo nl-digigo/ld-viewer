@@ -1,0 +1,65 @@
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+PREFIX nen2660: <https://w3id.org/nen2660/def#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+
+SELECT DISTINCT ?group_text ?group_iri ?entry_text ?entry_iri ?entry_badge ?entry_icon
+
+WHERE {
+
+#########################
+# This query returns the 'Usage in shapes' (as defined in the BPL) for a given concept.
+#   The result is presented as a non-clickable string.
+#
+# INPUT:
+#   ?term_iri: The IRI of the concept
+#########################
+
+#Select the needed components from the shape AND change URI to localname
+  ?property   ?rel              ?term_iri ;
+              sh:path           ?path .
+  ?shape      sh:property       ?property ;
+         	  sh:targetClass    ?targetClass .
+  BIND (REPLACE(STR(?targetClass), ".*?([^#/]*)$", "$1") AS ?targetClassSTR)
+  BIND (REPLACE(STR(?term_iri), ".*?([^#/]*)$", "$1") AS ?iriSTR)
+  BIND (REPLACE(STR(?path), ".*?([^#/]*)$", "$1") AS ?pathSTR)
+
+#In case of 'relation' change URI to localname
+  OPTIONAL{
+    ?property  sh:class    ?relationTarget .
+    BIND (REPLACE(STR(?relationTarget), ".*?([^#/]*)$", "$1") AS ?targetSTR_inRelations)
+  }
+#In case of 'attribute (with datatype)' change URI to localname
+  OPTIONAL{
+    ?property  sh:datatype ?datatype .
+    BIND (REPLACE(STR(?datatype), ".*?([^#/]*)$", "$1") AS ?datatypeSTR_inAttributesDatatype)
+  }
+#In case of 'attributes (with enumeration)'' 
+  OPTIONAL {
+    ?property  sh:in        ?in .
+  }
+
+#Bind the 'predicate' of the result
+  BIND (
+    IF(
+        exists { ?term_iri rdf:type owl:Class },
+            ?pathSTR,
+                ?iriSTR)
+    AS ?p)
+
+#Bind the 'object' of the result
+  BIND (
+    IF(BOUND(?relationTarget), ?targetSTR_inRelations, 
+        IF(BOUND(?datatype), ?datatypeSTR_inAttributesDatatype, 
+            IF(BOUND(?in), "Enumeratie", 
+                ?iriSTR)))
+    AS ?o)
+
+#Bind the result as combined string of the 'targetClass', 'predicate' and 'object'       
+  BIND (CONCAT(?targetClassSTR, " ", ?p, " ", ?o) AS ?entry_text)
+
+}
+ORDER BY ?group_text ?group_iri ?entry_text ?entry_iri
