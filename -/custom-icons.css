@@ -89,6 +89,21 @@
     background-repeat: no-repeat;
     background-size: 10px 10px;
 }
+.icon-term-type-lacestype {
+    display: inline-block;
+    font-family: "Icons";
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    vertical-align: middle;
+    width: 10px;
+    height: 10px;
+    background: url(images/icon-term-type-lacestype.svg);
+    background-repeat: no-repeat;
+    background-size: 10px 10px;
+}
 .icon-term-type-mb {
     display: inline-block;
     font-family: "Icons";
