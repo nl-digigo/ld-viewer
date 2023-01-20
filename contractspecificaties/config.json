@@ -2,7 +2,7 @@
   "$schema": "../-/config.schema.json",
 
   "dataServiceOptions": {
-    "url": "https://hub.laces.tech/crow/bimloket/contractspecificaties/ontology/cs-ontology-beta/sparql",
+    "url": "https://hub.laces.tech/crow/bimloket/contractspecificaties/ontology/contractspecificaties-ontology/sparql",
     "mode": "post",
     "auth": null,
     "username": "",
