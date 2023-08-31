@@ -1,0 +1,40 @@
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX sh:      <http://www.w3.org/ns/shacl#>
+PREFIX nen2660: <https://w3id.org/nen2660/def#>
+
+
+###################################
+# This query shows the roots of the taxonomy: 
+# In the current BPL configuration are these always: owl:Class, owl:DatatypeProperty and owl:ObjectProperty
+#
+# INPUT:
+#   N.A.
+###################################
+
+SELECT ?entry_text ?entry_iri ?entry_icon (COUNT(DISTINCT ?rootchild) AS ?entry_childCount)
+WHERE {
+
+    VALUES ( ?root ?explicitLabel ) 
+        {
+       #  ( owl:Class "Class"@en )
+       #  ( owl:DatatypeProperty "Attribute"@en )
+       #  ( owl:ObjectProperty "Relation"@en )
+       #  ( <http://data.digigo.nu/nlcs/def/6dc67749-5f40-4b32-a996-51acb2c46f64> "NLCS Object")
+         ( <https://w3id.org/nen2660/def#InformationObject> "InformationObject" )
+        }    
+
+    OPTIONAL {?root       skos:prefLabel      ?prefLabel } .
+    OPTIONAL {?rootchild  rdfs:subClassOf     ?root } .     
+    OPTIONAL {?rootchild  rdfs:subPropertyOf  ?root } .  
+    OPTIONAL {?root       rdfs:member         ?rootchild } .
+    OPTIONAL {?rootchild  rdf:type            ?root } .
+
+  BIND (?root AS ?entry_iri) .
+  BIND (COALESCE(?explicitLabel, ?prefLabel) AS ?entry_text) .
+  BIND ("icon-term-type-lacestype" AS ?entry_icon) .
+}
+GROUP BY ?entry_text ?entry_iri ?entry_icon
+ORDER BY ?entry_text ?entry_iri

@@ -1,0 +1,125 @@
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX vs:   <http://www.w3.org/2003/06/sw-vocab-status/ns#>
+PREFIX nen2660: <https://w3id.org/nen2660/def#>
+PREFIX dash: <http://datashapes.org/dash#>
+PREFIX sh:   <http://www.w3.org/ns/shacl#>
+PREFIX mim:  <http://bp4mc2.org/def/mim#>
+
+SELECT DISTINCT ?group_text ?group_iri ?entry_iri ?entry_text ?entry_icon
+WHERE {
+
+#########################
+# This query returns the 'Information Attributes' (as defined in the BPL) for a given concept.
+#
+# 
+# INPUT:
+#   ?term_iri: The IRI of the term
+#########################
+
+    {
+        ?term_iri ?p ?o .
+    }  
+        
+    BIND (IF (?p IN (rdfs:label, skos:prefLabel), "Label",
+          IF (?p IN (rdf:type), "Type", 
+          IF (?p IN (skos:altLabel), "Synonym", 
+          IF (?p IN (skos:notation), "Code",
+          IF (?p IN (skos:example), "Example",
+          IF (?p IN (rdfs:comment), "Comment", 
+          IF (?p IN (skos:definition), "Definition",
+          IF (?p IN (nen2660:abbreviation), "Abbreviation", 
+          IF (?p IN (rdfs:domain), "Domain", 
+          IF (?p IN (rdfs:range), "Range", 
+          IF (?p IN (vs:term_status), "Status",
+          IF (?p IN (owl:oneOf), "Possible values",
+          IF (?p IN (sh:in), "In list",
+          IF (?p IN (rdf:value), "Value",
+          IF (?p IN (skos:scopeNote), "Scope note",
+          IF (?p IN (rdfs:subClassOf), "Subclass of",
+          IF (?p IN (rdfs:subPropertyOf), "Subproperty of",
+          IF (?p IN (rdfs:member), "Collection",
+          IF (?p IN (skos:note), "Note", 
+          IF (?p IN (skos:related), "Related", 
+          IF (?p IN (owl:equivalentClass), "Equivalent", 
+          IF (?p IN (rdfs:seeAlso), "See also", ?empty))))))))))))))))))))))
+          AS ?textPropertyRecognized) .
+
+    OPTIONAL {
+        ?p skos:prefLabel ?textPropertyFound .
+    }
+
+    BIND (COALESCE(?textPropertyRecognized, ?textPropertyFound, ?p) AS ?group_text) .
+    BIND (?p AS ?group_iri) .
+
+    {
+        ?term_iri ?p ?o .
+        FILTER (isLiteral(?o)) .
+        BIND (?o AS ?entry_a) .
+        BIND (IF(LANG(?o)!="",CONCAT("flag-icon flag-icon-", LANG(?o)),"") AS ?entry_icon) .
+    
+    } 
+    UNION
+    {
+        ?term_iri ?p ?o .
+        FILTER (isIRI(?o) && !isBlank(?o) && ?p != owl:oneOf) .
+        OPTIONAL {
+            ?o skos:prefLabel ?oLabel .
+          #   FILTER(LANG(?oLabel)="nl"||LANG(?oLabel)="") .
+            BIND(STR(?oLabel) AS ?textObjectFound ) .
+        }
+        BIND (IF(contains(str(?o),"#"),strafter(str(?o), "#"),REPLACE(str(?o),"(.*)[//]","")) AS ?textObjectLocalname) .
+        BIND (COALESCE(?textObjectFound, ?textObjectLocalname) AS ?entry_a) .
+        BIND (?o AS ?entry_iri_a) .
+    }
+    UNION
+    {
+        ?term_iri owl:oneOf ?o .
+        ?value a ?term_iri .    
+        ?value skos:prefLabel ?valueName .
+        BIND (?value AS ?entry_iri_a) .
+        BIND (?valueName AS ?entry_a) .
+    }
+ 
+ #These binds make sure that IRI are also presented as a string, so these can be copied to the clipboard 
+    VALUES ?plattetekst
+    {
+       "/term/"
+       "/qudt"
+       "nen2660"
+       "nen3610"
+       "contractspecificaties"
+    }
+
+    BIND (IF(CONTAINS(STR(?entry_iri_a),?plattetekst) = true, STR(?entry_iri_a), ?entry_a) AS ?entry_b) .
+    BIND (IF(CONTAINS(STR(?entry_iri_a),?plattetekst) = true, "", ?entry_iri_a) AS ?entry_t) . 
+    BIND(COALESCE(?entry_b, ?entry_a) AS ?entry_text) .
+    BIND(COALESCE(?entry_t, ?entry_iri_a) AS ?entry_iri) .
+ 
+    BIND (IF (?group_text = "Type", 10, 
+          IF (?group_text = "Label", 20, 
+          IF (?group_text = "Code", 30,
+          IF (?group_text = "Value", 40,
+          IF (?group_text = "Definition", 60,
+          IF (?group_text = "Note", 61,
+          IF (?group_text = "Example", 70,
+          IF (?group_text = "Abbrevation", 80,
+          IF (?group_text = "Synonym", 90, 
+          IF (?group_text = "See also", 91, 
+          IF (?group_text = "Subclass of", 100,
+          IF (?group_text = "Subproperty of", 110,
+          IF (?group_text = "Possible values", 120,
+          IF (?group_text = "In list", 125, 
+          IF (?group_text = "Describes", 130,
+          IF (?group_text = "Transforms", 140,
+          IF (?group_text = "Scope note", 150,
+          IF (?group_text = "Referred standard", 160,
+          IF (?group_text = "Owner", 170,
+          IF (?group_text = "Domain", 190,
+          IF (?group_text = "Range", 200,
+          IF (?group_text = "Status", 210, 220))))))))))))))))))))))
+          AS ?sequence) .
+}
+ORDER BY ?sequence STR(?group_text) STR(?entry_text) STR(?entry_iri) ?entry_icon
