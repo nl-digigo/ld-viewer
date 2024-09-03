@@ -1,0 +1,7 @@
+---
+creation_rules:
+  # Encrypt with AWS KMS "development-sops-key" 
+  # - pgp: 7FDCD195CEEA8A754D83E4BED14A01FB764905D5
+  #   encrypted_regex: '^(.*backendUrl)$'
+  - kms: 'arn:aws:kms:eu-central-1:831246761080:key/257e3f95-045d-4919-9082-e1072471b8dd'
+    encrypted_regex: '^(.*username|.*email|.*mongodb\.uri|.*password|.*bucket\.name|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY)$'

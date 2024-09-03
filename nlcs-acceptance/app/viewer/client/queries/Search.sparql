@@ -60,12 +60,13 @@ WHERE {
       ?entry skos:prefLabel ?entryPreferredLabel .
       #FILTER(LANG(?entryPreferredLabel) != "nl") .
     }
-    OPTIONAL {
-      ?entry skos:prefLabel ?entryDutchLabel .
-      #FILTER(LANG(?entryDutchLabel) = "nl") .
-    }
+    # OPTIONAL {
+    #   ?entry skos:prefLabel ?entryDutchLabel .
+    #   #FILTER(LANG(?entryDutchLabel) = "nl") .
+    # }
     BIND (IF(contains(str(?entry),"#"),strafter(str(?entry), "#"),REPLACE(str(?entry),"(.*)[//]","")) AS ?entryLocalname) .
-    BIND (COALESCE(?entryPreferredLabel, ?entryDutchLabel, ?entryLocalname) AS ?entry_text) .
+    # BIND (COALESCE(?entryPreferredLabel, ?entryDutchLabel, ?entryLocalname) AS ?entry_text) .
+    BIND (COALESCE(?entryPreferredLabel, ?entryLocalname) AS ?entry_text) .
 
 }
 ORDER BY ?group_priority ?group_text ?entry_text ?entry_iri

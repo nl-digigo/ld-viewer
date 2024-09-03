@@ -1,5 +1,0 @@
-SELECT ("<<CONCEPT>> NLCS - Ontology" AS ?text)
-WHERE {
-  ?s ?p ?o .
-}
-LIMIT 1

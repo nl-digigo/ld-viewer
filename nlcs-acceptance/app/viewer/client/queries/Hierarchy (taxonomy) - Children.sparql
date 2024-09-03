@@ -35,13 +35,14 @@ WHERE {
       ?grandchild rdfs:subClassOf|rdfs:subPropertyOf ?child .
     }
   } 
-    OPTIONAL { ?child skos:prefLabel ?childLabel .
-
-    }
+  OPTIONAL { ?child skos:prefLabel ?childLabel .
+  }
+  
   BIND (?child AS ?entry_iri) .
   BIND ("icon-term-type-lacestype" AS ?entry_icon)
   BIND (IF(CONTAINS(STR(?child),"#"),STRAFTER(STR(?child), "#"),REPLACE(STR(?child),"(.*)[//]","")) AS ?childLocalname) .
   BIND (COALESCE(STR(?childLabel), ?childLocalname) AS ?entry_text) .
+  FILTER ( ?entry_text NOT IN ('document', 'file')) . 
       
 }
 GROUP BY ?entry_text ?entry_iri ?entry_icon

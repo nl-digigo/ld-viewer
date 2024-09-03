@@ -1,0 +1,28 @@
+{
+    "users": [
+        {
+            "_description": "The credentials that the user will use to log-in",
+            "id": "userId",
+            "email": "nlcs",
+            "password": "nlcs"     
+        }
+    ],
+    "cookies": {
+        "secret": "mySecret",  
+
+        "_description": "max days that the use can remain logged-in",       
+        "maxAgeDays": 14,  
+
+        "secure": false,
+        "sameSite": "lax"
+    },
+    "dataServiceOptions": {
+    	"mode": "post",
+    	"auth": "basic",
+
+        "_description": "The credentials of your Access Token on the LDP",
+    	"username": "a4dec918-8325-4235-9a5c-c861f27d99f2",
+    	"password": "NLCSACCEPTANCE"
+    }
+}
+

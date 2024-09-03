@@ -1,0 +1,81 @@
+image: docker:20.10.17
+
+variables:
+    # When using dind service we need to instruct docker, to talk with
+    # the daemon started inside of the service. The daemon is
+    # available with a network connection instead of the default
+    # /var/run/docker.sock socket. docker:19.03-dind does this
+    # automatically by setting the DOCKER_HOST in
+    # https://github.com/docker-library/docker/blob/d45051476babc297257df490d22cbd806f1b11e4/19.03/docker-entrypoint.sh#L23-L29
+    #
+    # The 'docker' hostname is the alias of the service container as described at
+    # https://docs.gitlab.com/ee/ci/docker/using_docker_images.html#accessing-the-services.
+    #
+    # When using dind, it's wise to use the overlayfs driver for
+    # improved performance.
+    DOCKER_DRIVER: overlay2
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    APP_NAME: linked-data-viewer
+
+services:
+    - docker:20.10.17-dind
+
+stages:
+    - build
+    - package
+    - upload
+    - deploy
+
+
+build-image:
+  stage: build
+  image: semmtech/maven-with-docker:3.6.3-jdk-11
+  variables:
+      DOCKER_HOST: tcp://docker:2375
+      DOCKER_TLS_CERTDIR: ""
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    - docker build -t "$CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME" .
+    - docker push "$CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME"
+    - docker push "$CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME:latest"
+  only:
+    changes:
+      - Dockerfile
+
+
+create-application:
+  stage: package
+  image: $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
+  script:
+    - cd app
+    - ant package
+
+
+upload-application-version:
+  stage: upload
+  image: $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
+  script:
+    - cd app
+    - ant upload
+  artifacts:
+    paths:
+      - app/build/*.zip
+      - app/build/build.properties
+
+
+deploy-application-version:
+  stage: deploy
+  image: $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
+  when: manual
+  script:
+    - cd app/build
+    - APP_VERSION=$(cat build.properties | grep "application.version" | cut -d'=' -f2-)
+    - ENV_ID=$(cat build.properties | grep "environment.id" | cut -d'=' -f2-)
+    - ENV_NAME=$(cat build.properties | grep "environment.name" | cut -d'=' -f2-)
+    - echo "environment.id=$ENV_ID"
+    - echo "application.version=$APP_VERSION"
+    - aws elasticbeanstalk update-environment --environment-id $ENV_ID --version-label $APP_VERSION --region eu-central-1
+  artifacts:
+    paths:
+      - app/build/build.properties
