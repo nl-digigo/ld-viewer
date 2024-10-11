@@ -1,0 +1,32 @@
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX sh:      <http://www.w3.org/ns/shacl#>
+PREFIX nen2660: <https://w3id.org/nen2660/def#>
+
+#########################
+# This query returns the taxonomy children to a parent term.
+#
+# INPUT:
+#   ?term_iri: The IRI of the parent term
+#########################
+
+SELECT ?entry_text ?entry_iri ?entry_icon (COUNT(?grandchild) AS ?entry_childCount)
+WHERE {
+  ?child rdfs:subClassOf ?term_iri .
+  OPTIONAL { 
+    ?grandchild rdfs:subClassOf ?child .
+  } .
+  OPTIONAL { 
+    ?child skos:prefLabel ?childLabel .
+  }
+  
+  BIND (?child AS ?entry_iri) .
+  BIND ("icon-term-type-lacestype" AS ?entry_icon)
+  BIND (IF(CONTAINS(STR(?child),"#"),STRAFTER(STR(?child), "#"),REPLACE(STR(?child),"(.*)[//]","")) AS ?childLocalname) .
+  BIND (COALESCE(STR(?childLabel), ?childLocalname) AS ?entry_text) .
+      
+}
+GROUP BY ?entry_text ?entry_iri ?entry_icon
+ORDER BY ?entry_text ?entry_iri ?entry_childCount

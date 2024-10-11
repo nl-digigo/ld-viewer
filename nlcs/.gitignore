@@ -1,2 +1,7 @@
-app/build/
-app/viewer/client/queries/.DS_Store
+nlcs/app/.ebextensions/securitygroup.config
+nlcs/app/build.xml
+nlcs/app/docker-compose.yml
+nlcs/.gitlab-ci.yml
+nlcs/.sops.yaml
+nlcs/Dockerfile
+nlcs/README.md

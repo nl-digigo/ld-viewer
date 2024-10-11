@@ -1,0 +1,14 @@
+nlcs/app/.ebextensions/securitygroup.config
+nlcs/app/build.xml
+nlcs/app/docker-compose.yml
+nlcs/.gitlab-ci.yml
+nlcs/.sops.yaml
+nlcs/Dockerfile
+nlcs/README.md
+nlcs-acceptance/app/.ebextensions/securitygroup.config
+nlcs-acceptance/app/build.xml
+nlcs-acceptance/app/docker-compose.yml
+nlcs-acceptance/.gitlab-ci.yml
+nlcs-acceptance/.sops.yaml
+nlcs-acceptance/Dockerfile
+nlcs-acceptance/README.md

@@ -1,0 +1,13 @@
+#########################
+# This query returns the name of the ontology.
+#
+# INPUT:
+#   ?iri: The IRI of the term/ontology/dataset
+#	?text: The name of the dataset
+#########################
+
+SELECT ("NLCS viewer" AS ?text)
+WHERE {
+  ?s ?p ?o .
+}
+LIMIT 1

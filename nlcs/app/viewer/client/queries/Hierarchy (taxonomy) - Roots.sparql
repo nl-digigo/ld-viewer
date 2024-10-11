@@ -1,0 +1,32 @@
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX sh:      <http://www.w3.org/ns/shacl#>
+PREFIX nen2660: <https://w3id.org/nen2660/def#>
+
+###################################
+# This query shows the roots of the taxonomy.
+#
+# INPUT:
+#   N.A.
+###################################
+
+SELECT ?entry_text ?entry_iri ?entry_icon (COUNT(DISTINCT ?rootchild) AS ?entry_childCount)
+WHERE {
+  ?root rdfs:subClassOf <https://w3id.org/nen2660/def#InformationObject> .
+  ?root skos:prefLabel ?rootname .
+  FILTER EXISTS { 
+    ?rootchild rdfs:subClassOf ?root .
+  }
+
+  OPTIONAL {
+    ?rootchild rdfs:subClassOf ?root .
+  } .
+
+  BIND (?root AS ?entry_iri) .
+  BIND (?rootname AS ?entry_text) .
+  BIND ("icon-term-type-lacestype" AS ?entry_icon) .
+}
+GROUP BY ?entry_text ?entry_iri ?entry_icon
+ORDER BY ?entry_text ?entry_iri
