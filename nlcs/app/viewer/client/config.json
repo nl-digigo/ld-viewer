@@ -25,7 +25,7 @@
 
   "_description": "Customisation of the html's page header, footer and letters. The 'color' parameter changes the letters.",
   "styling": {
-    "backgroundColor": "#FFD700",
+    "backgroundColor": "#ECD304",
     "color": "rgb(0, 0, 0)"
   },
 
@@ -98,6 +98,7 @@
   "subtitleHTML": "",
     "description": "HTML content which will be shown under the application version and title",
     "type": "string",
-  "_description": "(Optional). It creates an info button on log-in page with the below message."
+  "_description": "(Optional). It creates an info button on log-in page with the below message.",
   
+  "signUpTooltip": "De NLCS is voor iedereen toegankelijk. Om in te loggen gebruik je voor zowel de gebruikersnaam als het wachtwoord: nlcs"
 }
