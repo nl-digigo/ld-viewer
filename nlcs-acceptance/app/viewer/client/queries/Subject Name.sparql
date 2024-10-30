@@ -1,0 +1,29 @@
+PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+#########################
+# This query returns the name and IRI to a term.
+#
+# INPUT:
+#   ?term_iri: The IRI of the term
+#########################
+
+SELECT ?entry_text ?entry_iri
+WHERE {
+  ?term_iri ?p ?o .
+  
+  OPTIONAL {
+    ?term_iri rdfs:label ?labelRDFS .
+  #  FILTER (lang(?label) = "en") .
+  }
+  OPTIONAL {
+    ?term_iri skos:prefLabel ?labelSKOS .
+  #  FILTER (lang(?label) = "en") .
+  }
+  
+  BIND (?term_iri AS ?entry_iri) .
+  BIND (COALESCE(?labelSKOS,?labelRDFS, REPLACE(str(?object),"(.*)[//#]","")) AS ?entry_text) .
+}
+LIMIT 1

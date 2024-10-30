@@ -1,0 +1,42 @@
+PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:      <http://www.w3.org/2002/07/owl#>
+PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
+
+#########################
+# This query returns the taxonomy breadcrumbs to a term.
+#
+# INPUT:
+#   ?term_iri: The IRI of the term
+#########################
+
+SELECT ?entry_text ?entry_iri ?entry_icon (COUNT(DISTINCT ?ancestor) AS ?entry_ancestorDistance)
+WHERE {
+  ?term_iri rdfs:subClassOf* ?entry .
+  BIND (?entry AS ?entry_iri) .
+  
+# Exclude blank nodes
+  FILTER (isURI(?entry)) .
+
+# Exclude Restrictions AS nodes
+  FILTER NOT EXISTS {
+    ?entry rdf:type/rdfs:subClassOf* owl:Restriction .
+  }
+  
+# get name
+  OPTIONAL {
+    ?entry skos:prefLabel ?entryPreferredLabel .
+  }
+
+  BIND (IF(contains(str(?entry),"#"),strafter(str(?entry), "#"),REPLACE(str(?entry),"(.*)[//]","")) AS ?entryLocalname) .
+  BIND (COALESCE(?entryPreferredLabel, ?entryLocalname) AS ?entry_text) .
+  BIND ("icon-term-type" AS ?entry_icon) . 
+
+# pattern to assess which ancestors exist
+  OPTIONAL {
+      ?term_iri rdfs:subClassOf/rdfs:subClassOf* ?ancestor .
+      ?ancestor rdfs:subClassOf* ?entry_iri .
+  }
+}
+GROUP BY ?entry_text ?entry_iri ?entry_icon
+ORDER BY DESC(?entry_ancestorDistance) ?entry_text ?entry_iri ?entry_icon
