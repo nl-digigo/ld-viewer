@@ -98,6 +98,7 @@
   "subtitleHTML": "",
     "description": "HTML content which will be shown under the application version and title",
     "type": "string",
-  "_description": "(Optional). It creates an info button on log-in page with the below message."
-  
+  "_description": "(Optional). It creates an info button on log-in page with the below message.",
+
+  "signUpTooltip": "De NLCS is voor iedereen toegankelijk. Om in te loggen gebruik je voor zowel de gebruikersnaam als het wachtwoord: nlcs"
 }
