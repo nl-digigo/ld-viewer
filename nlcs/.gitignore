@@ -1,6 +1,5 @@
 nlcs/app/.ebextensions/securitygroup.config
 nlcs/app/build.xml
-nlcs/app/docker-compose.yml
 nlcs/.gitlab-ci.yml
 nlcs/.sops.yaml
 nlcs/Dockerfile
