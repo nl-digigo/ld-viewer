@@ -3,7 +3,7 @@
   "signUpTooltip": "Automatic signup for the Linked Data Viewer is not supported currently. Please contact Semmtech amd request an account. Thank you for your understanding.",
   "_description": "SPARQL endpoint parameters",
   "dataServiceOptions": {
-    "url": "https://hub.laces.tech/digitalbuildingdata/nlcs/acceptance/nlcs/versions/rv5_0_2/sparql",
+    "url": "https://hub.laces.tech/digitalbuildingdata/nlcs/acceptance/nlcs/versions/rv5_1_0/sparql",
 	  "mode": "post",
     "auth": "basic",
 
@@ -14,10 +14,18 @@
     "_description": "Version of your publication. It is possible to add multiple versions.",
     "versions": [
       {
-        "id": "NLCS-Acceptance-v5",
+        "id": "NLCS-Acceptance-v5_1",
+        "url": "https://hub.laces.tech/digitalbuildingdata/nlcs/acceptance/nlcs/versions/rv5_1_0/sparql",
+        "version": "NLCS Acceptance v5_1",
+        "date": 1730475641000,
+        "_description": "Generate the date using https://www.epochconverter.com/ and pick timestamp in ms"
+      },
+      {
+        "id": "NLCS-Acceptance-v5_0",
         "url": "https://hub.laces.tech/digitalbuildingdata/nlcs/acceptance/nlcs/versions/rv5_0_2/sparql",
-        "version": "NLCS Acceptance v5",
-        "date": 26042024
+        "version": "NLCS Acceptance v5_0",
+        "date": 1714146041000,
+        "_description": "Generate the date using https://www.epochconverter.com/ and pick timestamp in ms"
       }
       
     ]

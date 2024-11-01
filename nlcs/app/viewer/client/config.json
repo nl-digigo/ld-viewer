@@ -14,10 +14,11 @@
     "_description": "Version of your publication. It is possible to add multiple versions.",
     "versions": [
       {
-        "id": "NLCS-v5",
+        "id": "NLCS-v5_0",
         "url": "https://hub.laces.tech/digitalbuildingdata/nlcs/live/nlcs/versions/5_0_2/sparql",
-        "version": "NLCS v5",
-        "date": 26042024
+        "version": "NLCS v5_0",
+        "date": 1715090801000,
+        "_description": "Generate the date using https://www.epochconverter.com/ and pick timestamp in ms"
       }
       
     ]
