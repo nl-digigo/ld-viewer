@@ -1,0 +1,137 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX ls: <http://www.laces.tech/publication/ns/semmtech/live/laces/schema/shapes/>
+PREFIX lbm: <http://www.laces.tech/publication/ns/semmtech/live/laces/schema/blueprint-manager/>
+PREFIX otl: <http://www.laces.tech/publication/ns/semmtech/live/laces/schema/otl-manager/>
+PREFIX nen2660: <https://w3id.org/nen2660/def#>
+PREFIX  digigo: <http://data.digigo.nu/nlcs/def/>
+
+
+
+SELECT DISTINCT ?entry_iri ?preficate_iri ?object_iri ?entry_text ?predicate_text ?object_text
+
+#########################
+# This query returns all the triples for a given concept in a human readable way
+#
+# INPUT:
+#   ?term_iri: The IRI of the concept
+#########################
+
+WHERE {
+
+    #Taking all the triples.
+    ?term_iri ?predicate_iri ?object_iri .
+
+    # filter excluding blank nodes
+	FILTER (isURI(?term_iri)) .
+
+
+    BIND (?term_iri AS ?entry_iri)
+    ?entry_iri skos:prefLabel ?entry_text   .
+
+
+
+    #Getting only the prefixes for the Predicate 
+
+    BIND (
+        IF(
+        contains(str(?predicate_iri), "skos"), 
+        CONCAT("skos:", strafter(str(?predicate_iri), "skos:")), 
+        IF(
+        contains(str(?predicate_iri), "nen2660"), 
+        CONCAT("nen2660:", strafter(str(?predicate_iri), "nen2660:")), 
+        IF(
+        contains(str(?predicate_iri), "rdf-schema"), 
+        CONCAT("rdfs:", strafter(str(?predicate_iri), "rdfs:")), 
+        IF(
+        contains(str(?predicate_iri), "rdf"), 
+        CONCAT("rdf:", strafter(str(?predicate_iri), "rdf:")), 
+        IF(
+        contains(str(?predicate_iri), "owl"), 
+        CONCAT("owl:", strafter(str(?predicate_iri), "owl:")), 
+        IF(
+        contains(str(?predicate_iri), "xsd"), 
+        CONCAT("xsd:", strafter(str(?predicate_iri), "xsd:")), 
+        IF(
+        contains(str(?predicate_iri), "shacl"), 
+        CONCAT("shacl:", strafter(str(?predicate_iri), "shacl:")), 
+        IF(
+        contains(str(?predicate_iri), "digigo"), 
+        CONCAT("digigo:", strafter(str(?predicate_iri), "digigo:")), 
+        str(?predicate_iri)
+        )
+        )
+        )
+        )
+        )
+        )
+        )
+        ) AS ?prefix
+    ) .
+
+    #Getting the last part of the URI
+    BIND (IF(contains(str(?predicate_iri),"#"),strafter(str(?predicate_iri), "#"),REPLACE(str(?predicate_iri),"(.*)[//]","")) AS ?localName) .
+
+    #Create the final form
+    BIND (CONCAT(?prefix, ?localName) AS ?predicateName) .
+
+    #Take what exists
+    BIND (COALESCE(?predicateName, ?predicate_iri) AS ?predicate_text).
+
+    #Getting only the prefixes for the Predicate 
+
+    BIND (
+        IF(
+        contains(str(?object_iri), "skos"), 
+        CONCAT("skos:", strafter(str(?object_iri), "skos:")), 
+        IF(
+        contains(str(?object_iri), "nen2660"), 
+        CONCAT("nen2660:", strafter(str(?object_iri), "nen2660:")), 
+        IF(
+        contains(str(?object_iri), "rdf"), 
+        CONCAT("rdf:", strafter(str(?object_iri), "rdf:")), 
+        IF(
+        contains(str(?object_iri), "rdf-schema"), 
+        CONCAT("rdfs:", strafter(str(?object_iri), "rdfs:")), 
+        IF(
+        contains(str(?object_iri), "owl"), 
+        CONCAT("owl:", strafter(str(?object_iri), "owl:")), 
+        IF(
+        contains(str(?object_iri), "xsd"), 
+        CONCAT("xsd:", strafter(str(?object_iri), "xsd:")), 
+        IF(
+        contains(str(?object_iri), "shacl"), 
+        CONCAT("shacl:", strafter(str(?object_iri), "shacl:")), 
+        IF(
+        contains(str(?object_iri), "digigo"), 
+        CONCAT("digigo:", strafter(str(?object_iri), "digigo:")), 
+        str(?object_iri)
+        )
+        )
+        )
+        )
+        )
+        )
+        )
+        ) AS ?object_prefix
+    ) .
+
+    #Getting the last part of the URI
+    BIND(IF(contains(str(?object_iri),"#"),strafter(str(?object_iri), "#"),REPLACE(str(?object_iri),"(.*)[//]","")) AS ?objectName) .
+
+    #Get name of the object
+    OPTIONAL{
+      ?object_iri skos:prefLabel ?objectLabel  .
+    }
+
+    #Create the final form
+    # BIND(CONCAT(?object_prefix, ?objectName) AS ?objectWithPrefix) .
+
+    #Take what exists
+   BIND (COALESCE( ?objectWithPrefix, ?objectLabel, ?objectName  ) AS ?object_text).
+
+}

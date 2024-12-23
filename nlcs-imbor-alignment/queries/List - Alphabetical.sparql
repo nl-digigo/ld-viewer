@@ -1,0 +1,55 @@
+PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:      <http://www.w3.org/2002/07/owl#>
+PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl:   <http://www.w3.org/2008/05/skos-xl#>
+PREFIX iso-thes: <http://purl.org/iso25964/skos-thes#>
+PREFIX vann:     <http://purl.org/vocab/vann/>
+PREFIX nen2660: <https://w3id.org/nen2660/def#>
+
+SELECT DISTINCT  ?entry_text ?entry_iri ?entry_icon 
+WHERE {
+    ?thing rdf:type ?type .
+    VALUES (?type) { 
+        (owl:Class) 
+        (rdf:Property)
+        (skos:Concept)
+        }
+    FILTER(!strstarts(str(?thing),"https://w3id.org/nen2660/def#")) .    
+    FILTER(!strstarts(str(?thing), "http://data.digigo.nu/nlcs/def/Agent>")) .
+    FILTER(!strstarts(str(?thing), "http://data.digigo.nu/nlcs/def/Document")) .
+    FILTER(!strstarts(str(?thing), "http://data.digigo.nu/nlcs/def/Function")) .
+    FILTER(!strstarts(str(?thing), "http://data.digigo.nu/nlcs/def/Objective")) .
+    FILTER(!strstarts(str(?thing), "http://data.digigo.nu/nlcs/def/Risk")) .
+    FILTER(!strstarts(str(?thing), "http://data.digigo.nu/nlcs/def/File")) .
+
+	?thing rdf:type skos:Concept .
+	FILTER NOT EXISTS {
+		?thing skos:inScheme ?sch .
+	}
+	FILTER NOT EXISTS {
+		?thing rdfs:subClassOf ?superRoot .
+		?superRoot rdf:type ?superRootType .
+		FILTER (?thing != ?superRoot) .
+		FILTER (?superRoot != owl:Thing) .
+        FILTER (?superRootType != owl:Restriction && isURI(?superRoot)) .
+	}
+    
+    # filter excluding owl:Thing
+	FILTER (?thing != owl:Thing) .
+    
+    # filter excluding blank nodes
+	FILTER (isURI(?thing)) .
+
+	# filter excluding Restrictions as nodes
+	FILTER NOT EXISTS {
+		?thing rdf:type/rdfs:subClassOf* owl:Restriction .
+	}
+    
+	BIND (?thing AS ?entry_iri) .
+	BIND ("icon-term-type" AS ?entry_icon) .
+
+	?thing skos:prefLabel ?label .
+	BIND (?label AS ?entry_text) .
+}
+ORDER BY ?entry_text

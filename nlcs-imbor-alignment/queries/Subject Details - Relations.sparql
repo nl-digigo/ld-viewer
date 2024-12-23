@@ -1,0 +1,96 @@
+PREFIX ld: <http://linkeddata.ru/>
+PREFIX ne: <http://umbel.org/umbel/ne/>
+PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:      <http://www.w3.org/2002/07/owl#>
+PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
+PREFIX dcterms:  <http://purl.org/dc/terms/>
+PREFIX tennet: <http://data.tennet.eu/def/>
+PREFIX id: <http://data.tennet.eu/id/>
+PREFIX base: <https://w3id.org/def/basicsemantics-owl#>
+PREFIX nen2660: <https://w3id.org/nen2660/def#>
+PREFIX  viewer: <http://hub.laces.tech/semmtech/cases/infrastructure-otl---linked-data-viewer-dev/>
+PREFIX sh: <http://www.w3.org/ns/shacl#> 
+
+
+SELECT DISTINCT ?group_text ?group_iri ?entry_text ?entry_iri ?entry_icon ?entry_badge
+WHERE {
+
+#########################
+# This query returns certain relations for a given concept.
+#
+# INPUT:
+#   ?term_iri: The IRI of the concept
+#########################
+
+#BIND(<http://www.example.org/otl/shacl/result/22687fe0-a3c3-3b7c-8a3f-8326d0ded63a> AS ?term_iri) .
+
+#	?relation rdf:type/rdfs:subClassOf* ?propertyType .
+#	FILTER (?propertyType IN (owl:ObjectProperty , rdf:Property)) .
+#	FILTER (?propertyType NOT IN (owl:DatatypeProperty , owl:AnnotationProperty)) .
+
+	{
+		BIND(?term_iri AS ?input) .
+		?input rdfs:subClassOf/(rdfs:subClassOf*) ?restriction .
+		?restriction owl:onProperty ?relation .
+		?restriction a owl:Restriction .
+		FILTER (?relation NOT IN ( skos:notation , skos:prefLabel , rdf:value , skos:definition)) .
+		
+		# Exclude the aspects
+		FILTER NOT EXISTS {
+			?relation rdfs:range rdfs:Resource
+		}
+		# FILTER NOT EXISTS {
+		# 	?restriction owl:onClass nen2660:PhysicalObject
+		# }
+		# FILTER NOT EXISTS {
+		# 	?restriction owl:onProperty nen2660:hasPart .
+		# 	?restriction owl:onClass nen2660:Activity
+		# }
+		FILTER NOT EXISTS {
+			?relation rdfs:range/rdfs:subClassOf nen2660:EnumerationType
+		}
+		OPTIONAL {
+			?relation rdfs:range ?rdfsRange .
+		}
+		OPTIONAL {
+			?restriction owl:onClass ?owlRange .
+		}
+		OPTIONAL {
+			?shaclShape sh:targetClass ?term_iri .
+			?shaclShape sh:property ?shaclProperty .
+			?shaclProperty sh:path ?relation .
+			?shaclProperty sh:class ?shRange .
+		}
+
+		BIND (?relation AS ?group) .
+		BIND (?relation AS ?group_iri) .
+		FILTER NOT EXISTS {
+			?relation rdf:type/rdfs:subClassOf* owl:DatatypeProperty .
+		}
+		FILTER NOT EXISTS {
+			?relation rdf:type/rdfs:subClassOf* owl:AnnotationProperty .
+		}
+		BIND (COALESCE(?shRange,?owlRange,?rdfsRange) AS ?entry) .
+		FILTER (!STRSTARTS(str(?entry),"http://www.w3.org/2001/XMLSchema#")) .
+	} 
+	BIND (IF(!bound(?entry),?invalid,?entry) AS ?entry_iri) .
+    BIND (IF(!bound(?entry),"(not specified)",?invalid) AS ?noEntryName) .
+	BIND (IF(contains(str(?entry),"#"),strafter(str(?entry), "#"),REPLACE(str(?entry),"(.*)[//]","")) AS ?entryLocalname) .
+	# get name
+	OPTIONAL {	?entry skos:prefLabel ?entryLabel .
+				FILTER (LANG(?entryLabel) != "nl") .
+			}
+	BIND (COALESCE(?noEntryName, ?entryLabel, ?entryLocalname) AS ?entry_text) .
+	
+	# get group name
+	OPTIONAL {	?group skos:prefLabel ?groupLabel .
+				FILTER (LANG(?groupLabel) != "nl") .
+			}
+	BIND (IF(contains(str(?group),"#"),strafter(str(?group), "#"),REPLACE(str(?group),"(.*)[//]","")) AS ?groupLocalname) .
+	BIND (COALESCE(?groupLabel, ?groupLocalname) AS ?group_text) .
+
+	BIND ("icon-term-type" AS ?entry_icon) .
+}
+ORDER BY ?group_text ?group_iri ?entry_text ?entry_iri
+

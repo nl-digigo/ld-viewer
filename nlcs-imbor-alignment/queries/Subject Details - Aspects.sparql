@@ -1,0 +1,116 @@
+PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:      <http://www.w3.org/2002/07/owl#>
+PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl:   <http://www.w3.org/2008/05/skos-xl#>
+PREFIX sh:       <http://www.w3.org/ns/shacl#>
+PREFIX dcterms:  <http://purl.org/dc/terms/>
+PREFIX tennet: <http://data.tennet.eu/def/>
+PREFIX id: <http://data.tennet.eu/id/>
+PREFIX base: <https://w3id.org/def/basicsemantics-owl#>
+PREFIX nen2660: <https://w3id.org/nen2660/def#>
+
+SELECT DISTINCT ?group_text ?group_icon ?entry_text ?entry_iri ?entry_badge ?propertyValue
+
+WHERE {
+
+#########################
+# This query returns attributes for a given concept.
+#
+# INPUT:
+#   ?term_iri: The IRI of the concept
+#########################
+
+#BIND(<http://data.tennet.eu/def/0dd54f1a-77f9-3b23-a466-1e1aaca6cad9> AS ?term_iri) .
+
+
+	?term_iri rdfs:subClassOf/(rdfs:subClassOf*) ?restriction .
+	?restriction owl:onProperty ?attribute .
+    ?shaclShape sh:targetClass ?term_iri	.
+    
+	OPTIONAL { # get min
+		?restriction owl:minCardinality|owl:minQualifiedCardinality ?minC .
+	}
+	OPTIONAL { # get max
+		?restriction owl:maxCardinality|owl:maxQualifiedCardinality ?maxC .
+	}
+	BIND (CONCAT(IF(bound(?minC),STR(?minC),"0"),":",IF(bound(?maxC),STR(?maxC),"n")) AS ?entry_badge) .
+  
+    #Aspect with Literal Value.
+    {
+        ?shaclShape sh:property ?bnode .
+        ?bnode sh:path ?attribute.
+        ?bnode sh:hasValue ?propertyValue .
+        FILTER NOT EXISTS {
+            ?bnode sh:class ?qualificationGroup .
+        }
+		BIND(CONCAT(" [value: ",?propertyValue,"]") AS ?aspectText) .
+	}
+    #Aspect with qualificationGroupValue.
+    UNION {
+        ?shaclShape sh:property ?bnode .
+        ?bnode sh:path ?attribute.
+        ?bnode sh:hasValue ?qualificationGroupValue .
+        ?qualificationGroupValue skos:prefLabel ?qualificationGroupValueText .
+        ?bnode sh:class ?qualificationGroup .
+        ?qualificationGroup skos:prefLabel ?qualificationGroupName .
+		BIND(CONCAT(" [value: ",?qualificationGroupValueText, ", from list: ",?qualificationGroupName,"]") AS ?aspectText) .
+	}
+    #Aspect without qualificationGroupValue.
+    UNION {
+        ?shaclShape sh:property ?bnode .
+        ?bnode sh:path ?attribute.
+        FILTER NOT EXISTS {
+			?bnode sh:hasValue ?qualificationGroupValue .
+			?qualificationGroupValue skos:prefLabel ?qualificationGroupValueText .
+        }
+        ?bnode sh:class ?qualificationGroup .
+        ?qualificationGroup skos:prefLabel ?qualificationGroupName . 
+		BIND(CONCAT(" [from list: ",?qualificationGroupName,"]") AS ?aspectText) .
+	}
+    #Aspect with Datatype 
+    UNION {
+        ?shaclShape sh:property ?bnode .
+        ?bnode sh:path ?attribute.
+        ?bnode sh:datatype ?xsdDatatype .
+        FILTER (STRSTARTS(str(?xsdDatatype),"http://www.w3.org/2001/XMLSchema#"))
+        BIND(STRAFTER(str(?xsdDatatype),"http://www.w3.org/2001/XMLSchema#") AS ?datatypeText) .
+		BIND(CONCAT(" [datatype: ",?datatypeText,"]") AS ?aspectText) .
+    }
+    UNION {
+		?shaclShape sh:property ?bnode .
+        ?bnode sh:class <https://w3id.org/nen2660/def#QuantityValue>.
+        ?bnode sh:path ?attribute.
+		?attribute rdfs:range nen2660:QuantityValue .
+        ?bnode sh:node ?bnodeUnit   .
+        ?bnodeUnit sh:property/sh:path <http://schema.org/unitCode> .
+        ?bnodeUnit sh:property/sh:hasValue ?unit.
+        ?unit skos:prefLabel ?unitText .
+		BIND(CONCAT(" [unit: ",?unitText,"]") AS ?aspectText) .
+    }
+    
+	### TO DO skos: attributes?
+	
+	BIND (?attribute AS ?entry) .
+	BIND (?attribute AS ?entry_iri) .
+
+	# get name   
+	OPTIONAL {
+		?attribute skos:prefLabel ?primaryAttributeLabel .
+		FILTER (LANG(?primaryAttributeLabel) != "nl") .
+	}
+	OPTIONAL {
+		?attribute skos:prefLabel ?dutchAttributeLabel .
+		FILTER (LANG(?dutchAttributeLabel) = "nl") .
+	}
+
+	BIND (COALESCE(STR(?primaryAttributeLabel), STR(?dutchAttributeLabel)) AS ?attributeLabel) .
+	BIND (IF(contains(str(?entry),"#"),strafter(str(?entry), "#"),REPLACE(str(?entry),"(.*)[//]","")) AS ?entryLocalname) .
+	BIND (COALESCE(?attributeLabel, ?attributeRecognized, ?entryLocalname) AS ?entryName) .
+	 #Showing the information linked to an Aspect.
+    BIND (CONCAT(?entryName,?aspectText) AS ?entry_text) .
+	BIND ("Aspects" AS ?group_text) .
+    BIND ("icon-term-instance" AS ?entry_icon) .
+    BIND ("icon-term-type" AS ?group_icon) .
+}
+ORDER BY ?entry_text ?entry_iri
