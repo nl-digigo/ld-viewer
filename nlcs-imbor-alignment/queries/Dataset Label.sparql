@@ -1,0 +1,29 @@
+PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:      <http://www.w3.org/2002/07/owl#>
+PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl:   <http://www.w3.org/2008/05/skos-xl#>
+PREFIX iso-thes: <http://purl.org/iso25964/skos-thes#>
+
+SELECT ?iri ?text ?version
+WHERE {
+
+#########################
+# This query returns the name of the ontology.
+#
+# INPUT:
+#   ?iri: The IRI of the term/ontology/dataset
+#	?text: The name of the dataset
+#########################
+
+	?onto a owl:Ontology .
+
+	BIND (?onto AS ?entry) .	
+	BIND (?onto AS ?iri) .
+
+	BIND ("Linked Data Viewer - Industry Demos" AS ?text) .
+
+
+}
+ORDER BY ?iri
+LIMIT 1

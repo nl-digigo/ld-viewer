@@ -1,0 +1,144 @@
+{
+  "$schema": "./config.schema.json",
+  "signUpTooltip": "Automatic signup for the Linked Data Viewer is not supported currently. Please contact Semmtech amd request an account. Thank you for your understanding.",
+  "_description": "SPARQL endpoint parameters: alignment + imbor vocabulaire + nlcs + (linkset) ",
+  "dataServiceOptions": {
+    "url": "https://hub.laces.tech/digitalbuildingdata/nlcs/test/nlcs-imbor-alignment/versions/1/sparql?default-graph-uri=https://hub.laces.tech/digitalbuildingdata/nlcs/test/nlcs-imbor-linkset-sample-for-ld-viewer/versions/1&default-graph-uri=https://hub.laces.tech/crow/imbor/2022/p/vocabulaire/versions/02&default-graph-uri=https://hub.laces.tech/digitalbuildingdata/nlcs/live/nlcs/versions/5_0_2",
+    "mode": "post",
+    "auth": "basic",
+
+    "_description": "URL of the viewer. The parameters for the log-in can be adjusted on the config.json file on the server folder",
+    "backendUrl": "http://localhost:8082",
+
+    "_description": "Version of your publication. It is possible to add multiple versions.",
+    "versions": [
+      {
+        "id": "asda-sadasd3-1asdv",
+        "url": "https://hub.laces.tech/digitalbuildingdata/nlcs/live/nlcs/versions/5_0_2/sparql?default-graph-uri=https://hub.laces.tech/crow/imbor/2022/p/vocabulaire/versions/02&default-graph-uri=https://hub.laces.tech/digitalbuildingdata/nlcs/test/nlcs-imbor-linkset-sample-for-ld-viewer/versions/1&default-graph-uri=https://hub.laces.tech/digitalbuildingdata/nlcs/test/nlcs-imbor-alignment/versions/1",        
+        "version": "V1",
+        "date": 1823213434322
+      }      
+    ]
+  },
+
+  "_description": "Customisation of the html's page header, footer and letters. The 'color' parameter changes the letters.",
+  "styling": {
+    "backgroundColor": "#3c4650",
+    "color": "rgb(255, 255, 255)"
+  },
+
+  "_description":"SPARQL query to load the selected term.",
+  "queryTerm": "url:queries/Subject Name.sparql",
+
+  "_description": "Array of hierarchy configurations. Each hierarchy represent a tree to browse, driven by SPARQL queries. It is possible to add multiple tabs.",
+  "hierarchies": [
+    {
+      "id": "list-alphabetical",
+      "name": "Alphabetical List",
+      "queryRoots": "url:queries/List - Alphabetical.sparql"
+    }
+  ],
+
+
+  "_description": "Configuration for the information pane, its start page and its tabs.",
+  "informationPane": {
+    
+    "startPage": {
+      "name": "Library Information",
+
+      "_description":"Static properties fill in the Start Page with textual information.",
+      "staticProperties": [
+        {
+          "name": "URI",
+          "value": "https://NLCS-Imbor-alignment.ldviewer.com"
+        },
+        {
+          "name": "Owner",
+          "value": "Digigo"
+        },
+        {
+          "name": "Created",
+          "value": "23/12/2024"
+        },
+        {
+          "name": "Publisher",
+          "value": "Digigo"
+        }
+      ]
+    },
+
+
+    "_description": "Array of tab configurations. Each tab represent a UI section driven by a SPARQL query",
+    "tabs": [
+      {
+        "type": "info",
+        "id": "tab-info",
+        "name": "info",
+        "icon": "oi oi-info",
+
+        "_description": "SPARQL Query to create a graph with the linked concepts to the selected term.",
+        "queryWebOfRelations": "url:queries/Web Of Relations.sparql",
+
+        "query": "url:queries/Subject Details - Info.sparql"
+      },
+      {
+        "type": "attributes",
+        "id": "tab-kenmerken",
+        "name": "aspects",
+        "icon": "oi oi-spreadsheet",
+        "query": "url:queries/Subject Details - Aspects.sparql",
+        "hideIfEmpty": true
+      },
+      {
+        "type": "info",
+        "id": "tab-relations",
+        "name": "relations",
+        "icon": "oi oi-share",
+        "query": "url:queries/Subject Details - Relations.sparql",
+        "hideIfEmpty": true
+      },
+      {
+        "type": "specifications",
+        "id": "tab-specs",
+        "name": "specifications",
+        "icon": "oi oi-clipboard",
+        "query": "url:queries/Subject Details - Specifications.sparql",
+        "hideIfEmpty": true
+      },
+      {
+        "type": "overview",
+        "id": "tab-overview",
+        "name": "overview",
+        "icon": "oi oi-spreadsheet",
+        "query": "url:queries/Subject Details - Overview Table.sparql",
+
+        "_description": "Parameter which enables the overview table to present information only for the selected term. Otherwise, it can present the full dataset",
+        "useCurrentUri": true,
+
+        "hideIfEmpty": true
+      }
+    ]
+  },
+
+  "comment": "startTerm : [OPTIONAL - ENTER THE URL FOR THE ITEM THAT SHOULD BE SHOWN ON OPENING THE VIEWER]",
+
+  "_description": "SPARQL query to load the application version and title",
+  "queryOTL": "url:queries/Dataset Label.sparql",
+
+  "_description": "SPARQL query to perform search",
+  "querySearch": "url:queries/Search.sparql",
+
+  "subtitleHTML": "",
+    "description": "HTML content which will be shown under the application version and title",
+    "type": "string",
+  "_description": "(Optional). It creates an info button on log-in page with the below message.",
+
+  "required": [
+    "dataServiceOptions",
+    "queryTerm",
+    "hierarchies",
+    "informationPane",
+    "queryOTL",
+    "querySearch"
+  ]
+}

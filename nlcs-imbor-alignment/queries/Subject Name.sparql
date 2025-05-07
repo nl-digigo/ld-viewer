@@ -1,0 +1,39 @@
+PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:      <http://www.w3.org/2002/07/owl#>
+PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
+PREFIX dcterms:  <http://purl.org/dc/terms/>
+PREFIX id: <http://data.tennet.eu/id/>
+PREFIX base: <https://w3id.org/def/basicsemantics-owl#>
+PREFIX nen2660: <https://w3id.org/nen2660/def#>
+PREFIX  viewer: <http://hub.laces.tech/semmtech/cases/infrastructure-otl---linked-data-viewer-dev/>
+PREFIX specifications: <http://www.laces.tech/publication/ns/semmtech/live/laces/schema/specifications/> 
+#########################
+# This query returns the name and IRI to a term.
+#
+# INPUT:
+#   ?term_iri: The IRI of the term
+#########################
+
+SELECT ?entry_text ?entry_iri ?entry_icon
+WHERE {
+
+  
+
+  BIND (?term_iri AS ?entry_iri) .
+  
+  OPTIONAL {
+    ?term_iri skos:prefLabel|specifications:attr-Individual-name ?entryPreferredLabel .
+  }
+  
+  BIND (IF(contains(str(?entry),"#"),strafter(str(?entry), "#"),REPLACE(str(?entry),"(.*)[//]","")) AS ?entryLocalname) .
+  BIND (COALESCE(str(?entryPreferredLabel), ?entryLocalname) AS ?entry_text) .
+  
+    OPTIONAL {
+        ?entry_iri rdf:type ?type .
+        FILTER (?type IN (rdf:Property , owl:ObjectProperty , owl:DatatypeProperty , owl:AnnotationProperty)) .
+        BIND ("icon-term-attr" AS ?icon_attr) .
+    }
+    BIND ("icon-term-type" AS ?icon_type) .
+    BIND (COALESCE(?icon_attr, ?icon_rel, ?icon_type) AS ?entry_icon) .
+}

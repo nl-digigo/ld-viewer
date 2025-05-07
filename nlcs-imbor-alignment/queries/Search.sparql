@@ -1,0 +1,33 @@
+PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:      <http://www.w3.org/2002/07/owl#>
+PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl:   <http://www.w3.org/2008/05/skos-xl#>
+PREFIX iso-thes: <http://purl.org/iso25964/skos-thes#>
+
+SELECT ?group_text ?entry_text ?entry_iri
+WHERE {
+
+# This query performs a search
+#
+# INPUT:
+#   ?searchKey: The term to search
+
+  
+    ?uri rdfs:label|skos:prefLabel ?label .
+    BIND (?uri AS ?entry_iri) .
+    BIND (?label AS ?entry_text) .
+    {
+        ?uri rdfs:label|skos:prefLabel ?label .
+        FILTER (regex(?label, ?searchKey, "i")) .
+        BIND (STRLANG("On basis of name", "nl") AS ?group_text) .
+        BIND (1 AS ?group_priority) .
+    } UNION {
+        ?uri skos:definition ?definition .
+        FILTER (regex(?definition, ?searchKey, "i")) .
+        BIND (STRLANG("On basis of definition", "nl") AS ?group_text) .
+        BIND (2 AS ?group_priority) .
+    }
+    FILTER (bound(?group_text)).
+}
+ORDER BY ?group_priority ?group_text ?entry_text ?entry_iri

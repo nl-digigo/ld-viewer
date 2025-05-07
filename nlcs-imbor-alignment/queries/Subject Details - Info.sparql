@@ -1,0 +1,135 @@
+PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:      <http://www.w3.org/2002/07/owl#>
+PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl:   <http://www.w3.org/2008/05/skos-xl#>
+PREFIX iso-thes: <http://purl.org/iso25964/skos-thes#>
+PREFIX vs:       <http://www.w3.org/2003/06/sw-vocab-status/ns#>
+PREFIX smls: <https://w3id.org/def/basicsemantics-owl#>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX spl: <http://hub.laces.tech/to-interface/data/spl-to-nen_2/def/>
+PREFIX atl: <http://hub.laces.tech/to-interface/data/atl-nen2660/>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX nen2660: <https://w3id.org/nen2660/def#>
+
+SELECT DISTINCT ?group_text ?entry_text ?entry_iri ?entry_icon
+WHERE {
+
+#########################
+# This query returns certain information on a given term.
+# Name, description, etc.
+#
+# INPUT:
+#   ?term_iri: The IRI of the term
+#########################
+
+    {
+		BIND (1 AS ?sequence) .
+		BIND ("Type" AS ?group_text) .
+		?term_iri rdf:type ?type .
+        BIND (IF(contains(str(?type),"#"),strafter(str(?type), "#"),REPLACE(str(?type),"(.*)[//]","")) AS ?typeLocalname) .
+		BIND (?typeLocalname AS ?entry_text) .
+	}
+    UNION
+	{
+    	BIND (2 AS ?sequence) .
+		BIND ("Imbor - Close Match" AS ?group_text) .
+        ?term_iri skos:closeMatch ?close_matchURI .
+		BIND (?close_matchURI AS ?entry_iri) .
+        ?close_matchURI skos:prefLabel ?imbor_label .
+        BIND (?imbor_label AS ?entry_text) .
+    }
+    UNION
+    {
+    	BIND (2 AS ?sequence) .
+		BIND ("Imbor - Related Match" AS ?group_text) .
+        # FILTER( ?term_iri rdf:type skos:Concept . )
+        ?term_iri skos:relatedMatch ?related_matchURI .
+		BIND (?related_matchURI AS ?entry_iri) .
+        ?related_matchURI skos:prefLabel ?imbor_label .
+        BIND (?imbor_label AS ?entry_text) .
+    }
+    UNION
+    {
+    	BIND (2 AS ?sequence) .
+		BIND ("Imbor - Broad Match" AS ?group_text) .
+        # FILTER( ?term_iri rdf:type skos:Concept . )
+        ?term_iri skos:broadMatch ?broad_matchURI .
+		BIND (?broad_matchURI AS ?entry_iri) .
+        ?broad_matchURI skos:prefLabel ?imbor_label .
+        BIND (?imbor_label AS ?entry_text) .
+    }
+    UNION
+    {
+    	BIND (2 AS ?sequence) .
+		BIND ("Imbor - Narrow Match" AS ?group_text) .
+        # FILTER( ?term_iri rdf:type skos:Concept . )
+        ?narrow_matchURI skos:broadMatch ?term_iri .
+		BIND (?narrow_matchURI AS ?entry_iri) .
+        ?narrow_matchURI skos:prefLabel ?imbor_label .
+        BIND (?imbor_label AS ?entry_text) .
+    }
+    UNION
+    {
+        BIND (3 AS ?sequence) . 
+        BIND ("NLCS Concept" AS ?group_text) .
+        ?nlcs_term rdfs:seeAlso ?term_iri .
+        BIND (IRI(?nlcs_term) AS ?entry_iri) .
+        ?nlcs_term skos:prefLabel ?nlcs_def_label .
+        BIND (?nlcs_def_label AS ?entry_text) .
+    }
+    UNION
+	{
+    	BIND (2 AS ?sequence) .
+		BIND ("Synonym" AS ?group_text) .
+        ?term_iri skos:altLabel ?synonym .
+		BIND (?synonym AS ?entry_text) .
+    }
+    UNION
+    {
+    	BIND (3 AS ?sequence) .
+		BIND ("Definition" AS ?group_text) .
+		?term_iri skos:definition ?definitie   . 
+		BIND (?definitie AS ?entry_text) .
+    }
+    UNION 
+    {
+        BIND (4 AS ?sequence)   .
+        BIND ("Information Attribute" AS ?group_text)   .
+        BIND (?term_iri AS ?output_selector)    
+        {
+            SELECT DISTINCT ?output_selector ?information_type_name
+            WHERE{
+                BIND (?term_iri AS ?output_selector)
+                ?output_selector ?informationAttribute ?value   .
+                ?informationAttribute rdf:type owl:AnnotationProperty   .
+                ?informationAttribute skos:prefLabel ?informationAttributeName  .
+                BIND ( concat(str(?informationAttributeName),": ",str(?value)) AS ?information_type_name)
+            }
+        }
+        BIND (?information_type_name as ?entry_text) .
+    }
+	UNION
+	{
+    	BIND (5 AS ?sequence) .
+		BIND ("Subclass Of" AS ?group_text) .
+		?term_iri skos:broader ?parent   . 
+        ?parent skos:prefLabel ?parentName .
+		BIND (?parentName AS ?entry_text) .
+        BIND (?parent AS ?entry_iri) .
+    }
+    UNION 
+    {
+        BIND (6 AS ?sequence)   .
+        BIND ("List Values" AS ?group_text)  .
+        ?object rdfs:subClassOf/(rdfs:subClassOf*) ?restriction .
+        ?restriction a owl:Restriction  .
+        ?restriction owl:onProperty ?term_iri .
+        ?restriction owl:onClass  ?QualificationGroup   .
+        ?QualificationGroup skos:prefLabel ?QualificationGroupName .
+        ?QualificationGroup sh:in/rdf:rest*/rdf:first ?listValue	.
+        ?listValue skos:prefLabel ?listValueText .
+        BIND (?listValueText AS ?entry_text)    .
+    }
+}
+ORDER BY ?sequence ?entry_icon  ?entry_iri ?entry_text 
